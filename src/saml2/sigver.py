@@ -1001,6 +1001,83 @@ class CryptoBackendXMLSecurity(CryptoBackend):
             return False
 
 
+class CryptoBackendXMLSEC(CryptoBackend):
+    def find_node(self, signed, node_name):
+        import xmlsec
+        from lxml.etree import QName
+
+        thing = QName(*node_name.rsplit(':', 1))
+        if signed.tag == thing:
+            target = signed
+        else:
+            target = signed.find(thing)
+
+        return xmlsec.tree.find_node(target, xmlsec.constants.NodeSignature)
+
+    def validate_signature(
+        self,
+        signedtext: str,
+        cert_file: str,
+        cert_type: str,
+        node_name: str,
+        node_id: str,
+        id_attr: str,
+    ) -> bool:
+        import xmlsec
+        from lxml.etree import fromstring
+
+        xmlsec.init()
+        xmlsec.enable_debug_trace()
+
+        template = fromstring(signedtext)
+        xmlsec.tree.add_ids(template, [id_attr])
+
+        signature_node = self.find_node(template, node_name)
+        # Create a digital signature context (no key manager is needed).
+        ctx = xmlsec.SignatureContext()
+        key = xmlsec.Key.from_file(
+            cert_file, xmlsec.constants.KeyDataFormatCertPem
+        )
+        # Set the key on the context.
+        ctx.key = key
+
+        # this call throws a VerificationError on failure
+        try:
+            ctx.verify(signature_node)
+            return True
+        except xmlsec.exceptions.VerificationError as e:
+            raise e
+
+    def sign_statement(
+        self,
+        statement: str,
+        node_name: str,
+        key_file: str,
+        node_id: str,
+        id_attr: str,
+    ) -> str:
+        import xmlsec
+        from lxml.etree import fromstring, tostring
+
+        xmlsec.init()
+        xmlsec.enable_debug_trace()
+
+        signed = fromstring(statement)
+        xmlsec.tree.add_ids(signed, [id_attr])
+
+        signature_node = self.find_node(signed, node_name)
+
+        ctx = xmlsec.SignatureContext()
+        key = xmlsec.Key.from_file(key_file, xmlsec.constants.KeyDataFormatPem)
+        ctx.key = key
+
+        ctx.sign(signature_node)
+
+        result = tostring(signed, xml_declaration=True)
+
+        return result
+
+
 def security_context(conf):
     """ Creates a security context based on the configuration
 
@@ -1022,6 +1099,9 @@ def security_context(conf):
 
     sec_backend = None
 
+    crypto = CryptoBackendXMLSEC()
+
+    """
     if conf.crypto_backend == 'xmlsec1':
         xmlsec_binary = conf.xmlsec_binary
 
@@ -1058,6 +1138,7 @@ def security_context(conf):
         err_msg = 'Unknown crypto_backend {backend}'
         err_msg = err_msg.format(backend=conf.crypto_backend)
         raise SigverError(err_msg)
+    """
 
     enc_key_files = []
     if conf.encryption_keypairs is not None:
