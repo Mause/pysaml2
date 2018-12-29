@@ -13,12 +13,12 @@ def dotname(module):
     else:
         return module
 
-try:
-    from saml2.sigver import get_xmlsec_binary
-except ImportError:
-    get_xmlsec_binary = None
+# try:
+#     from saml2.sigver import get_xmlsec_binary
+# except ImportError:
+#     get_xmlsec_binary = None
 
-if get_xmlsec_binary:
-    xmlsec_path = get_xmlsec_binary(["/opt/local/bin"])
-else:
-    xmlsec_path = '/usr/bin/xmlsec1'
+# if get_xmlsec_binary:
+#     xmlsec_path = get_xmlsec_binary(["/opt/local/bin"])
+# else:
+xmlsec_path = '/usr/bin/xmlsec1'
