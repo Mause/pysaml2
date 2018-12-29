@@ -1,21 +1,10 @@
-### =============================================================
-### This configuration file is used by CircleCI build server
-### https://circleci.com/docs/config-sample
-### =============================================================
 version: 2
 
 jobs:
-  toxify:
-      docker:
-        - image: python:3.6
-
-      steps:
-        - checkout
-        - run: pip install tox && tox
-
-workflows:
-  version: 2
-
-  myproj:
-    jobs:
-      - toxify
+  build:
+    working_directory: ~/pysaml2
+    docker:
+      - image: themattrix/tox
+    steps:
+      - checkout
+      - run: tox
