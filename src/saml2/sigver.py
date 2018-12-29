@@ -165,6 +165,7 @@ def get_xmlsec_binary(paths=None):
     :return: full name of the xmlsec1 binary found. If no binaries are
         found then an exception is raised.
     """
+    return None
     if os.name == 'posix':
         bin_name = ['xmlsec1']
     elif os.name == 'nt':
